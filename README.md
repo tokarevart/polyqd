@@ -26,7 +26,7 @@ Set them in `--dims` option in the order dx dy dz
 ### Example
 
 ``` sh
-$ polyqd tess -n 20 --dims 25 6 2  
+$ polyqd tess -n 20 --dims 50 12 4  
 $ polyqd reg --fmax 20 --sel 3 --mloop 5  
 $ polyqd mesh --cl 3   -o polyqd-rough.msh
 $ polyqd mesh --cl 1   -o polyqd.msh2
