@@ -15,8 +15,8 @@ mod generic_tess {
     #[derive(Debug, Clone)]
     pub struct Tessellation {
         pub n: String,
+        pub morpho: String,
         pub domain: Option<String>,
-        pub morpho: Option<String>,
         pub morphooptiini: Option<String>,
         pub reg: Option<String>,
         pub fmax: Option<String>,
@@ -30,8 +30,8 @@ mod generic_tess {
         pub fn new(n: &str) -> Self {
             Self {
                 n: n.into(),
+                morpho: "".to_owned(),
                 domain: None,
-                morpho: None,
                 morphooptiini: None,
                 reg: None,
                 fmax: None,
@@ -48,7 +48,7 @@ mod generic_tess {
         }
 
         pub fn morpho(&mut self, v: &str) -> &mut Self  {
-            self.morpho = Some(v.into());
+            self.morpho = v.into();
             self
         }
 
@@ -99,7 +99,7 @@ mod generic_tess {
             };
             ext_args("-n", &Some(self.n.clone()));
             ext_args("-domain", &self.domain);
-            ext_args("-morpho", &self.morpho);
+            ext_args("-morpho", &Some(self.morpho.clone()));
             ext_args("-morphooptiini", &self.morphooptiini);
             ext_args("-reg", &self.reg);
             ext_args("-fmax", &self.fmax);
@@ -128,11 +128,7 @@ pub struct Tess{
 
 impl Tess {
     pub fn new(config: Config) -> Self {
-        Self::with_morpho(config, "graingrowth")
-    }
-
-    pub fn with_morpho(config: Config, morpho: &str) -> Self {
-        let Config{ dims, n } = config;
+        let Config{ dims, n, morpho } = config;
         let mut tess = Tessellation::new(&n);
         let domain = format!(
             "cube({},{},{})", 
@@ -146,7 +142,11 @@ impl Tess {
     }
 
     pub fn run(&self) {
-        Config{ dims: self.dims, n: self.n.clone() }.serialize_to_file();
+        Config{ 
+            dims: self.dims, 
+            n: self.n.clone(), 
+            morpho: self.tess.morpho.clone() 
+        }.serialize_to_file();
         self.tess.run()
     }
 }
@@ -156,7 +156,7 @@ pub struct Reg(Tessellation);
 
 impl Reg {
     pub fn new() -> Self {
-        let Config{ dims, n } = Config::deserialize_from_file();
+        let Config{ dims, n, morpho } = Config::deserialize_from_file();
         let mut tess = Tessellation::new(&n);
         let domain = format!(
             "cube({},{},{})", 
@@ -167,9 +167,15 @@ impl Reg {
                                     rel_cache("polyqd-tess.tess"), 
                                     rel_cache("polyqd-tess.tess")))
             .domain(&domain)
+            .morpho(&morpho)
             .output(&rel_cache("polyqd-tess-reg"))
             .format("geo");
         Self(tess)
+    }
+
+    pub fn morpho(&mut self, v: &str) -> &mut Self  {
+        self.0.morpho(v);
+        self
     }
 
     pub fn fmax(&mut self, v: &str) -> &mut Self {
@@ -244,6 +250,7 @@ pub struct SpecDims {
 pub struct Config {
     pub dims: SpecDims,
     pub n: String,
+    pub morpho: String,
 }
 
 impl Config {
@@ -273,11 +280,12 @@ fn main() {
             dy: dims[1], 
             dz: dims[2], 
         };
-        if let Some(morpho) = matches.value_of("morpho") {
-            Tess::with_morpho(Config{ dims, n }, morpho).run();
+        let config = if let Some(v) = matches.value_of("morpho") {
+            Config{ dims, n, morpho: v.to_owned() }
         } else {
-            Tess::new(Config{ dims, n }).run();
-        }
+            Config{ dims, n, morpho: "graingrowth".to_owned() }
+        };
+        Tess::new(config).run();
     }
 
     if let Some(matches) = matches.subcommand_matches("reg") {
