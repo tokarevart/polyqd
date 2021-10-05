@@ -25,6 +25,10 @@ subcommands:
                 takes_value: true
                 number_of_values: 3
                 help: Specimen dimensions in the order dx dy dz
+            - morpho:
+                long: morpho
+                takes_value: true
+                help: Morphological properties of the cells
     - reg:
         about: Regularizes a tessellation, that is, removes the small edges and, indirectly, the small faces
         args:

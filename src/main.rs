@@ -128,13 +128,17 @@ pub struct Tess{
 
 impl Tess {
     pub fn new(config: Config) -> Self {
+        Self::with_morpho(config, "graingrowth")
+    }
+
+    pub fn with_morpho(config: Config, morpho: &str) -> Self {
         let Config{ dims, n } = config;
         let mut tess = Tessellation::new(&n);
         let domain = format!(
             "cube({},{},{})", 
             dims.dx, dims.dy, dims.dz,
         );
-        tess.morpho("graingrowth")
+        tess.morpho(&morpho)
             .domain(&domain)
             .output(&rel_cache("polyqd-tess"))
             .format("tess");
@@ -269,7 +273,11 @@ fn main() {
             dy: dims[1], 
             dz: dims[2], 
         };
-        Tess::new(Config{ dims, n }).run();
+        if let Some(morpho) = matches.value_of("morpho") {
+            Tess::with_morpho(Config{ dims, n }, morpho).run();
+        } else {
+            Tess::new(Config{ dims, n }).run();
+        }
     }
 
     if let Some(matches) = matches.subcommand_matches("reg") {

@@ -1,6 +1,6 @@
 Cargo.lock
 target
-polyqd-cache
+polyqd-cache*
 *.msh
 *.key
 *.sh
