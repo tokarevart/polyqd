@@ -6,3 +6,5 @@ polyqd-cache*
 *.sh
 lspost*
 *.zip
+*.stpoly
+*.py
