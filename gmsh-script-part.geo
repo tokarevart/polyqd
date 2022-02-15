@@ -14,5 +14,7 @@ Plugin(AnalyseMeshQuality).IGEMeasure = 1;
 Plugin(AnalyseMeshQuality).DimensionOfElements = 3;
 Plugin(AnalyseMeshQuality).Run;
 
+Printf("Info    : Number of tetrahedra: %g", Mesh.NbTetrahedra);
+
 Mesh.MshFileVersion = 2;
 Mesh.SaveAll = 1;
