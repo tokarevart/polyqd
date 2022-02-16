@@ -2,7 +2,8 @@ use geoconv::*;
 use std::fs;
 use std::process::{Command, Stdio};
 use serde::{Deserialize, Serialize};
-use clap::App;
+use clap::{App, Arg, ArgMatches};
+use indoc::indoc;
 
 const CACHE_DIR: &str = "polyqd-cache";
 fn rel_cache(filename: &str) -> String {
@@ -266,9 +267,97 @@ impl Config {
     }
 }
 
+fn cli() -> ArgMatches {
+    let default_fmax = "20";
+    let default_mloop = "5";
+
+    App::new("polyqd")
+        .author("Tokarev Artyom <tokarev28.art@gmail.com>")
+        .about("Polycrystalline cuboidic specimen generation and meshing software")
+        .after_help(indoc!("\
+            First use tess module to generate initial tesselation,
+            then use reg module to regularize that tesselation
+            and only then mesh regularized tesselation with mesh module.
+
+            Every time you use a module its last result is cached
+            in ./polyqd-cache directory, so, for example, you don't need
+            to generate and regularize tesselation multiple time to create meshes with
+            different characteristic lengths."))
+        .subcommand(App::new("tess")
+            .about("Generates cuboidic specimen as tessellation")
+            .arg(Arg::new("n")
+                .short('n')
+                .required(true)
+                .takes_value(true)
+                .help("Number of grains in granular part of the specimen"))
+            .arg(Arg::new("dims")
+                .long("dims")
+                .required(true)
+                .takes_value(true)
+                .number_of_values(3)
+                .help("Specimen dimensions in the order dx dy dz"))
+            .arg(Arg::new("morpho")
+                .long("morpho")
+                .takes_value(true)
+                .help("Morphological properties of the cells")))
+        .subcommand(App::new("reg")
+            .about("Regularizes a tessellation, that is, removes the small edges and, \
+                    indirectly, the small faces")
+            .arg(Arg::new("fmax")
+                .long("fmax")
+                .takes_value(true)
+                .default_value(default_fmax)
+                .help("Maximum allowed face flatness fault (in degrees)"))
+            .arg(Arg::new("sel")
+                .long("sel")
+                .takes_value(true)
+                .help("Absolute small edge (maximum) length"))
+            .arg(Arg::new("mloop")
+                .long("mloop")
+                .takes_value(true)
+                .default_value(default_mloop)
+                .help("Maximum number of regularization loops")))
+        .subcommand(App::new("mesh")
+            .about("Meshes regularized tessellation")
+            .arg(Arg::new("cl")
+                .long("cl")
+                .required(true)
+                .takes_value(true)
+                .help("Absolute characteristic length of the elements"))
+            .arg(Arg::new("output")
+                .short('o')
+                .long("output")
+                .required(true)
+                .takes_value(true)
+                .help("Output file name")))
+        .subcommand(App::new("regmesh")
+            .about("reg and mesh modules combined, with 'sel' arg equal to 'cl'")
+            .arg(Arg::new("fmax")
+                .long("fmax")
+                .takes_value(true)
+                .default_value(default_fmax)
+                .help("Maximum allowed face flatness fault (in degrees)"))
+            .arg(Arg::new("mloop")
+                .long("mloop")
+                .takes_value(true)
+                .default_value(default_mloop)
+                .help("Maximum number of regularization loops"))
+            .arg(Arg::new("cl")
+                .long("cl")
+                .required(true)
+                .takes_value(true)
+                .help("Absolute characteristic length of the elements"))
+            .arg(Arg::new("output")
+                .short('o')
+                .long("output")
+                .required(true)
+                .takes_value(true)
+                .help("Output file name")))
+    .get_matches()
+}
+
 fn main() {
-    let yml = clap::load_yaml!("../cli.yml");
-    let matches = App::from_yaml(yml).get_matches();
+    let matches = cli();
     
     if let Some(matches) = matches.subcommand_matches("tess") {
         let n = matches.value_of("n").unwrap().to_owned();
