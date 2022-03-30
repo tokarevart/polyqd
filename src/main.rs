@@ -121,7 +121,7 @@ mod generic_tess {
 use generic_tess::*;
 
 #[derive(Debug, Clone)]
-pub struct Tess{
+pub struct Tess {
     tess: Tessellation, 
     dims: SpecDims, 
     n: String,
